@@ -233,7 +233,7 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
 
   script += `Promise.resolve(val).then(res => { console.log('${delimiter}'); console.log(JSON.stringify(res)); })`;
 
-  debug.exec(`\nFILE: ${file}`);
+  debug.exec(`\nFILE: ${file}; EXEC by TSX: ${tsx}`);
   // debug.exec(`SCRIPT: \n${script}`);
 
   const output = await runProcess(tsx, ['-e', script], { cwd });
