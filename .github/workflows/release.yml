@@ -15,44 +15,59 @@ jobs:
     name: 检查版本号
     runs-on: ubuntu-latest
     outputs:
-      new_tag: ${{ steps.info.outputs.version }}
-      current_tag: ${{ steps.tags.outputs.current_tag }}
-      exists: ${{ steps.compare.outputs.exists }}
+      current_tag: ${{ steps.package_json.outputs.version }}
+      previous_tag: ${{ steps.version_tag.outputs.version }}
+      created: ${{ steps.create_tag.outputs.created }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+
       - name: 读取 package.json 版本号
-        id: info
-        uses: jaywcjlove/github-action-package@main
+        id: package_json
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "Package version is: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
 
-      - run: echo "version - ${{ steps.info.outputs.version }}"
-
-      - name: 获取当前标签
-        id: tags
+      - name: 获取所有标签
         run: |
           git fetch --prune --unshallow
-          tags=($(git tag -l --sort=-version:refname))
-          current_tag=${tags[0]}
-          echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
 
-      - name: 比较 package.json 版本和当前标签版本
-        id: compare
+      - name: 获取当前 tag 版本
+        id: version_tag
         run: |
-          package_version=${{ steps.info.outputs.version }}
-          current_tag=${{ steps.tags.outputs.current_tag }}
-          if [ "$package_version" == "$current_tag" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Versions match: $package_version == $current_tag"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Versions do not match: $package_version != $current_tag"
+          current_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          if [ -z "$current_tag" ] || ! [[ "$current_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "当前版本非法，留空"
+            current_tag=""
           fi
+          echo "version=${current_tag#v}" >> $GITHUB_OUTPUT # Remove 'v' prefix if present
+
+      - name: 对比、创建版本tag
+        id: create_tag
+        run: |
+          package_version=${{ steps.package_json.outputs.version }}
+          tag_version=${{ steps.version_tag.outputs.version }}
+          if [ "$package_version" == "$tag_version" ]; then
+            echo "created=false" >> $GITHUB_OUTPUT
+            echo "Versions match: $package_version == $tag_version"
+          else
+            echo "created=true" >> $GITHUB_OUTPUT
+            echo "Versions do not match: $package_version != $tag_version"
+            echo "Creating new tag: v$package_version"
+            git tag "v$package_version"
+            git push origin "v$package_version"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     name: 构建并发版
     needs: check
-    if: needs.check.outputs.exists == 'false'
+    if: needs.check.outputs.created == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
@@ -62,8 +77,8 @@ jobs:
         id: extract_commit_messages
         run: |
           set -e
-          current_tag="${{ needs.check.outputs.new_tag }}"
-          previous_tag="${{ needs.check.outputs.current_tag }}"
+          current_tag="${{ needs.check.outputs.current_tag }}"
+          previous_tag="${{ needs.check.outputs.previous_tag }}"
           if [ -z "$previous_tag" ]; then
             commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
           else
@@ -172,7 +187,7 @@ jobs:
   publish:
     name: 发布到 NPM
     needs: [check, release]
-    if: needs.check.outputs.exists == 'false'
+    if: needs.check.outputs.created == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
