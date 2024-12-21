@@ -213,7 +213,6 @@ jobs:
       security-events: write
       pages: read
 
-    environment: npm
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
