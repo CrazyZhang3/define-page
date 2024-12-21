@@ -72,6 +72,8 @@ jobs:
     needs: check
     if: needs.check.outputs.created == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -86,6 +88,8 @@ jobs:
           set -e
           current_tag="${{ needs.check.outputs.current_tag }}"
           previous_tag="${{ needs.check.outputs.previous_tag }}"
+          echo "Current Tag: $current_tag"
+          echo "Previous Tag: $previous_tag"
           if [ -z "$previous_tag" ]; then
             commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
           else
