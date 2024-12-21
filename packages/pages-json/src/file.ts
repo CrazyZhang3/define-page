@@ -1,6 +1,6 @@
-import type { Page } from './page';
 import type { SFCScriptBlock } from '@vue/compiler-sfc';
 import type { ParseResult } from 'ast-kit';
+import type { Page } from './page';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';

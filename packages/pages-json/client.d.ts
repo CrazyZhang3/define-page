@@ -1,3 +1,3 @@
-declare module globalThis {
+declare namespace globalThis {
   export const definePage: typeof import('.').definePage;
 }
