@@ -1,24 +1,69 @@
 {
-  "name": "@uni-ku/macros",
+  "name": "@uni-ku/define-page",
   "type": "module",
   "version": "0.1.0",
-  "description": "",
-  "author": "Edwin Xu",
+  "description": "Define uniapp pages.json dynamically.",
+  "author": "Edwin Xu <edwinhuish@gmail.com>",
   "license": "MIT",
+  "homepage": "https://github.com/uni-ku/define-page",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uni-ku/define-page.git"
+  },
+  "bugs": "https://github.com/uni-ku/define-page/issues",
   "keywords": [
     "uniapp",
     "uni-app",
-    "macros"
+    "pages.json",
+    "macros",
+    "definePage"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./client": {
+      "types": "./client.d.ts"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./index.d.ts",
+  "files": [
+    "client.d.ts",
+    "dist",
+    "index.d.ts"
   ],
   "scripts": {
-    "build": "rimraf --glob packages/*/dist && pnpm -r --filter=./packages/* run build",
-    "publish": "pnpm build && changeset publish",
-    "dev:h5": "pnpm build && pnpm --filter=./packages/playground dev:h5",
-    "dev:mp-weixin": "pnpm build && pnpm --filter=./packages/playground dev:mp-weixin",
+    "clean": "rimraf dist",
+    "build": "unbuild",
+    "stub": "unbuild --stub",
     "typecheck": "tsc -p . --noEmit",
     "lint": "eslint .",
     "lint:fix": "pnpm lint --fix",
     "test": "vitest"
+  },
+  "dependencies": {
+    "@antfu/utils": "^0.7.7",
+    "@babel/generator": "^7.23.6",
+    "@babel/traverse": "^7.24.1",
+    "@babel/types": "^7.24.0",
+    "@vue/compiler-sfc": "^3.4.21",
+    "ast-kit": "^0.12.1",
+    "chokidar": "^3.6.0",
+    "debug": "^4.3.4",
+    "fast-glob": "^3.3.2",
+    "magic-string": "^0.30.8",
+    "tsx": "^4.7.1",
+    "unconfig": "^0.3.11"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.12.0",
@@ -27,7 +72,9 @@
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.1",
     "@dcloudio/types": "^3.4.8",
+    "@types/babel__core": "^7.20.5",
     "@types/babel__generator": "^7.6.8",
+    "@types/babel__traverse": "^7.20.5",
     "@types/debug": "^4.1.12",
     "@types/node": "^20.11.28",
     "@typescript-eslint/eslint-plugin": "^8",
