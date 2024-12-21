@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       current_tag: v${{ steps.package_json.outputs.version }}
-      previous_tag: ${{ steps.version_tag.outputs.latest_version }}
+      previous_tag: ${{ steps.version_tag.outputs.latest_tag }}
       created: ${{ steps.create_tag.outputs.created }}
     steps:
       - name: 检出代码
@@ -75,6 +75,10 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+
+      - name: 获取所有标签
+        run: |
+          git fetch --prune --unshallow
 
       - name: 提取并分类提交消息
         id: extract_commit_messages
