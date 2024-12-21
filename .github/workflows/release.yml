@@ -42,10 +42,10 @@ jobs:
           package_version=${{ steps.info.outputs.version }}
           current_tag=${{ steps.tags.outputs.current_tag }}
           if [ "$package_version" == "$current_tag" ]; then
-            echo "exists='true'" >> $GITHUB_OUTPUT
+            echo "exists=true" >> $GITHUB_OUTPUT
             echo "Versions match: $package_version == $current_tag"
           else
-            echo "exists='false'" >> $GITHUB_OUTPUT
+            echo "exists=false" >> $GITHUB_OUTPUT
             echo "Versions do not match: $package_version != $current_tag"
           fi
 
