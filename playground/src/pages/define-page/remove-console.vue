@@ -10,5 +10,5 @@ definePage(() => {
 </script>
 
 <template>
-  <div>test</div>
+  <div>remove-console</div>
 </template>
