@@ -78,22 +78,22 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 获取所有标签
+      - name: 获取当前和上一个标签
+        id: get_tags
         run: |
           git fetch --prune --unshallow
+          tags=($(git tag -l --sort=-version:refname))
+          current_tag=${tags[0]}
+          previous_tag=${tags[1]}
+          echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
+          echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
 
       - name: 提取并分类提交消息
         id: extract_commit_messages
         run: |
           set -e
-
-          current_tag="${{ needs.check.outputs.current_tag }}"
-          previous_tag="${{ needs.check.outputs.previous_tag }}"
-          echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
-          echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
-          echo "Current Tag: $current_tag"
-          echo "Previous Tag: $previous_tag"
-
+          current_tag="${{ steps.get_tags.outputs.current_tag }}"
+          previous_tag="${{ steps.get_tags.outputs.previous_tag }}"
           if [ -z "$previous_tag" ]; then
             commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
           else
