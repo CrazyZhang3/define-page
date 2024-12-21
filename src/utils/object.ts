@@ -5,8 +5,7 @@ export function deepMerge<T extends Record<string, any> = any>(...objs: T[]): T 
     for (const [key, val] of Object.entries(obj)) {
       if (isObject(val)) {
         result[key] = deepMerge(result[key], val);
-      }
-      else {
+      } else {
         result[key] = val;
       }
     }

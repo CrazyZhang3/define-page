@@ -18,6 +18,22 @@ export default antfu(
         singleline: { delimiter: 'semi', requireLast: false },
         multilineDetection: 'brackets',
       }],
+      'style/brace-style': ['warn', '1tbs'],
+      'style/padded-blocks': 'off',
+      'no-console': 'off',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'none',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
   {

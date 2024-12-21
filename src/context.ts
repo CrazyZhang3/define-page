@@ -272,8 +272,7 @@ function uniquePagesOptions(options: PagesJsonPage[], merge = true): PagesJsonPa
     const cached = store.get(opt.path) || {} as PagesJsonPage;
     if (merge) {
       store.set(opt.path, deepMerge(cached, opt));
-    }
-    else {
+    } else {
       store.set(opt.path, opt);
     }
   }

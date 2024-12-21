@@ -36,7 +36,6 @@ export interface DefinePageOptions extends Partial<PagesJsonPage> {
   tabbar?: DefineTabbarOptions;
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
 export function definePage(options: MaybePromiseCallable<DefinePageOptions>) {
 }
 
@@ -125,8 +124,7 @@ export class Page {
         options: this.options,
         hasChanged,
       };
-    }
-    catch (err: any) {
+    } catch (err: any) {
       const msg = `Read page options fail in ${absolutePath}\n${err.message}`;
       debug.error(msg);
       throw err;
