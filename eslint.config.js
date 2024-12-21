@@ -18,14 +18,6 @@ export default antfu(
         singleline: { delimiter: 'semi', requireLast: false },
         multilineDetection: 'brackets',
       }],
-      'import/order': [
-        'warn',
-        {
-          groups: ['type', 'builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object'],
-          alphabetize: { order: 'asc', caseInsensitive: true },
-          warnOnUnassignedImports: false,
-        },
-      ],
     },
   },
   {

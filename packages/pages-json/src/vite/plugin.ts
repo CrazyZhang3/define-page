@@ -1,5 +1,5 @@
-import type { UserConfig } from '../config';
 import type { Plugin } from 'vite';
+import type { UserConfig } from '../config';
 import { spawn } from 'node:child_process';
 import process from 'node:process';
 import chokidar from 'chokidar';
