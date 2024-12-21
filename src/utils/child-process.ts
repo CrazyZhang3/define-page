@@ -19,10 +19,12 @@ export function runProcess(command: string, args: string[] = [], options?: Spawn
     child.on('close', () => {
       if (errors.length) {
         reject(errors.join('').trim());
+        child.kill();
         return;
       }
 
       resolve(output.join('').trim());
+      child.kill();
     });
 
     child.on('error', error => reject(error));

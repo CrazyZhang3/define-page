@@ -42,8 +42,7 @@ export class File {
     if (path.isAbsolute(filepath)) {
       this.absolutePath = filepath;
       this.relativePath = path.relative(config.basePath, this.absolutePath);
-    }
-    else {
+    } else {
       this.relativePath = filepath;
       this.absolutePath = path.join(config.basePath, this.relativePath);
     }
@@ -198,7 +197,7 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
   }
 
   if (!fs.existsSync(tsx)) {
-    throw new Error(`[@uni-ku/define-page] "tsx" is required parse macro expression value`);
+    throw new Error(`[@uni-ku/define-page] "tsx" is required for parse macro expression value`);
   }
 
   const ast = t.file(t.program([
@@ -218,9 +217,6 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
 
   const cwd = path.dirname(file);
 
-  const randTxt = Math.random().toString(36).slice(-8);
-  const delimiter = `\n====${randTxt}====\n`;
-
   let script = '';
 
   const importScript = imports.map(imp => `${generate(imp).code}\n`).join('');
@@ -231,18 +227,22 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
     ? `let fn=${code}\nlet val=fn();\n`
     : `let val=${code}\n`;
 
-  script += `console.log('${delimiter}');Promise.resolve(val).then(res => { console.log(JSON.stringify(res)); })`;
+  script += `Promise.resolve(val).then(res=>console.log(JSON.stringify(res)))`;
 
   debug.exec(`\nFILE: ${file}; EXEC by TSX: ${tsx}`);
   debug.exec(`SCRIPT: \n${script}`);
 
   const output = await runProcess(tsx, ['-e', script], { cwd });
 
-  const result = output.split(delimiter).pop();
+  try {
 
-  const res: R | undefined = result ? JSON.parse(result) : undefined;
+    const res = JSON.parse(output) as R;
+    debug.exec(`RESULT: ${output}`);
+    return res;
 
-  debug.exec(`RESULT: ${JSON.stringify(res, null, 2)}`);
+  } catch (_err) {
 
-  return res;
+    debug.error(output);
+    throw new Error(`[@uni-ku/define-page] parse macro expression value error:\n${output}`);
+  }
 }

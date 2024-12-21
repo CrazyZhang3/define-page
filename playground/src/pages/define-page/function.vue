@@ -16,5 +16,5 @@ definePage(() => {
 </script>
 
 <template>
-  <div>test</div>
+  <div>define page in function mode</div>
 </template>
