@@ -93,9 +93,9 @@ jobs:
           echo "Previous Tag: $previous_tag"
 
           if [ -z "$previous_tag" ]; then
-            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
+            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf' || true)
           else
-            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$previous_tag".."$current_tag" | grep -E 'feat|fix|docs|perf')
+            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$previous_tag".."$current_tag" | grep -E 'feat|fix|docs|perf' || true)
           fi
 
           # 转义 ` 字符
