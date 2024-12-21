@@ -221,7 +221,7 @@ jobs:
       - name: 安装 PNPM
         uses: pnpm/action-setup@v3.0.0
         with:
-          version: 8
+          version: latest
           run_install: false
 
       - name: 配置 Node.js
@@ -237,5 +237,4 @@ jobs:
         run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
