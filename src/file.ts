@@ -219,7 +219,7 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
   const cwd = path.dirname(file);
 
   const randTxt = Math.random().toString(36).slice(-8);
-  const delimiter = `====${randTxt}====`;
+  const delimiter = `\n====${randTxt}====\n`;
 
   let script = '';
 
@@ -231,7 +231,7 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
     ? `let fn=${code}\nlet val=fn();\n`
     : `let val=${code}\n`;
 
-  script += `Promise.resolve(val).then(res => { console.log('${delimiter}'); console.log(JSON.stringify(res)); })`;
+  script += `console.log('${delimiter}');Promise.resolve(val).then(res => { console.log(JSON.stringify(res)); })`;
 
   debug.exec(`\nFILE: ${file}; EXEC by TSX: ${tsx}`);
   debug.exec(`SCRIPT: \n${script}`);
