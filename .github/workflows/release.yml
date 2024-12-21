@@ -228,6 +228,7 @@ jobs:
         with:
           node-version: lts/*
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
 
       - name: 安装依赖
         run: pnpm i --frozen-lockfile
