@@ -86,10 +86,14 @@ jobs:
         id: extract_commit_messages
         run: |
           set -e
+
           current_tag="${{ needs.check.outputs.current_tag }}"
           previous_tag="${{ needs.check.outputs.previous_tag }}"
+          echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
+          echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
           echo "Current Tag: $current_tag"
           echo "Previous Tag: $previous_tag"
+
           if [ -z "$previous_tag" ]; then
             commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
           else
