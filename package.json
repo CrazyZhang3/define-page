@@ -1,7 +1,7 @@
 {
   "name": "@uni-ku/define-page",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Define uniapp pages.json dynamically.",
   "author": "Edwin Xu <edwinhuish@gmail.com>",
   "license": "MIT",
@@ -69,8 +69,6 @@
     "@antfu/eslint-config": "^3.12.0",
     "@antfu/utils": "^0.7.7",
     "@babel/generator": "^7.23.6",
-    "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.1",
     "@dcloudio/types": "^3.4.8",
     "@types/babel__core": "^7.20.5",
     "@types/babel__generator": "^7.6.8",

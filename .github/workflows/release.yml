@@ -1,5 +1,7 @@
-# name属性用来指定这个工作流的名字
-name: Create release and publish NPM
+name: Release
+
+permissions:
+  contents: write
 
 on:
   # 当对分支master进行push操作的时候,触发该条工作流
@@ -9,8 +11,168 @@ on:
     branches: [master]
 
 jobs:
+  check:
+    name: 检查版本号
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.info.outputs.version }}
+      current_tag: ${{ steps.tags.outputs.current_tag }}
+      exists: ${{ steps.compare.outputs.exists }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 读取 package.json 版本号
+        id: info
+        uses: jaywcjlove/github-action-package@main
+
+      - run: echo "version - ${{ steps.info.outputs.version }}"
+
+      - name: 获取当前标签
+        id: tags
+        run: |
+          git fetch --prune --unshallow
+          tags=($(git tag -l --sort=-version:refname))
+          current_tag=${tags[0]}
+          echo "current_tag=$current_tag" >> $GITHUB_OUTPUT
+
+      - name: 比较 package.json 版本和当前标签版本
+        id: compare
+        run: |
+          package_version=${{ steps.info.outputs.version }}
+          current_tag=${{ steps.tags.outputs.current_tag }}
+          if [ "$package_version" == "$current_tag" ]; then
+            echo "exists='true'" >> $GITHUB_OUTPUT
+            echo "Versions match: $package_version == $current_tag"
+          else
+            echo "exists='false'" >> $GITHUB_OUTPUT
+            echo "Versions do not match: $package_version != $current_tag"
+          fi
+
   release:
-    name: Release
+    name: 构建并发版
+    needs: check
+    if: needs.check.outputs.exists == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 提取并分类提交消息
+        id: extract_commit_messages
+        run: |
+          set -e
+          current_tag="${{ needs.check.outputs.new_tag }}"
+          previous_tag="${{ needs.check.outputs.current_tag }}"
+          if [ -z "$previous_tag" ]; then
+            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$current_tag" | grep -E 'feat|fix|docs|perf')
+          else
+            commit_messages=$(git log --pretty=format:"%s - by @%an (%h)" "$previous_tag".."$current_tag" | grep -E 'feat|fix|docs|perf')
+          fi
+
+          # 转义 ` 字符
+          commit_messages=$(echo "$commit_messages" | sed 's/`/\\\`/g')
+
+          # feat_messages=$(echo "$commit_messages" | grep 'feat' || true)
+          # fix_messages=$(echo "$commit_messages" | grep 'fix' || true)
+          # docs_messages=$(echo "$commit_messages" | grep 'docs' || true)
+          # perf_messages=$(echo "$commit_messages" | grep 'perf' || true)
+
+          # feat_messages=("${feat_messages[@]//\`/\\\`}")
+          # fix_messages=("${fix_messages[@]//\`/\\\`}")
+          # docs_messages=("${docs_messages[@]//\`/\\\`}")
+          # perf_messages=("${perf_messages[@]//\`/\\\`}")
+
+          # echo "feat_messages=(${feat_messages[@]})" >> $GITHUB_OUTPUT
+          # echo "fix_messages=(${fix_messages[@]})" >> $GITHUB_OUTPUT
+          # echo "docs_messages=(${docs_messages[@]})" >> $GITHUB_OUTPUT
+          # echo "perf_messages=(${perf_messages[@]})" >> $GITHUB_OUTPUT
+
+          {
+            echo 'feat_messages<<EOF'
+            echo "$commit_messages" | grep 'feat' || true
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          {
+            echo 'fix_messages<<EOF'
+            echo "$commit_messages" | grep 'fix' || true
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          {
+            echo 'docs_messages<<EOF'
+            echo "$commit_messages" | grep 'docs' || true
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          {
+            echo 'perf_messages<<EOF'
+            echo "$commit_messages" | grep 'perf' || true
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: 获取当前分支名
+        id: get_branch_name
+        run: |
+          branch_name=$(git rev-parse --abbrev-ref HEAD)
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+
+      - name: 发版详情
+        id: generate_release_notes
+        run: |
+          # 提取提交消息分类
+          feat_messages=("${{ steps.extract_commit_messages.outputs.feat_messages }}")
+          fix_messages=("${{ steps.extract_commit_messages.outputs.fix_messages }}")
+          docs_messages=("${{ steps.extract_commit_messages.outputs.docs_messages }}")
+          perf_messages=("${{ steps.extract_commit_messages.outputs.perf_messages }}")
+
+          release_notes=""
+
+          if [[ -n "$feat_messages" ]]; then
+            release_notes="$release_notes\n### 🚀 Features 新功能:  \n"
+            while IFS= read -r message; do
+              release_notes="$release_notes\n- $message"
+            done <<< "$feat_messages"
+          fi
+
+          if [[ -n "$fix_messages" ]]; then
+            release_notes="$release_notes\n### 🩹 Fixes 缺陷修复:  \n"
+            while IFS= read -r message; do
+              release_notes="$release_notes\n- $message"
+            done <<< "$fix_messages"
+          fi
+
+          if [[ -n "$docs_messages" ]]; then
+            release_notes="$release_notes\n### 📖 Documentation 文档:  \n"
+            while IFS= read -r message; do
+              release_notes="$release_notes\n- $message"
+            done <<< "$docs_messages"
+          fi
+
+          if [[ -n "$perf_messages" ]]; then
+            release_notes="$release_notes\n### 🔥 Performance 性能优化:  \n"
+            while IFS= read -r message; do
+              release_notes="$release_notes\n- $message"
+            done <<< "$perf_messages"
+          fi
+
+          # 转义 ` 字符
+          release_notes=$(echo "$release_notes" | sed 's/`/\\\`/g')
+          echo "release_notes=$release_notes" >> $GITHUB_OUTPUT
+
+      - name: 写入生成的发布说明到 changelog.md
+        run: |
+          echo -e "${{ steps.generate_release_notes.outputs.release_notes }}" > changelog.md
+          cat changelog.md
+
+      - name: 引用 changelog.md 创建发版
+        id: release_tag
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          bodyFile: changelog.md
+
+  publish:
+    name: 发布到 NPM
+    needs: [check, release]
+    if: needs.check.outputs.exists == 'false'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -24,34 +186,29 @@ jobs:
 
     environment: npm
     steps:
-      - name: Checkout Repo
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v3.0.0
-        name: Install pnpm
+      - name: 安装 PNPM
+        uses: pnpm/action-setup@v3.0.0
         with:
           version: 8
           run_install: false
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: pnpm
 
-      - name: Install Dependencies
+      - name: 安装依赖
         run: pnpm i --frozen-lockfile
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          commit: 'chore: bump versions'
-          title: 'chore: bump versions'
-          publish: pnpm run publish
+      - name: 发布到 NPM
+        run: pnpm publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
