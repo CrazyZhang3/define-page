@@ -224,6 +224,9 @@ jobs:
       - name: 安装依赖
         run: pnpm i --frozen-lockfile
 
+      - name: 打包
+        run: pnpm build
+
       - name: 发布到 NPM
         run: pnpm publish
         env:
