@@ -250,8 +250,8 @@ export const ctx = new Context();
 
 function listFiles(dir: string, options: fg.Options = {}) {
   const { cwd, ignore = [], deep = 3, ...others } = options;
-  const source = FILE_EXTENSIONS.map(ext => path.join(dir, '**', `*.${ext}`));
-  const files = fg.sync(source, {
+  const source = FILE_EXTENSIONS.map(ext => `${dir}/**/*.${ext}`);
+  return fg.sync(source, {
     cwd,
     ignore,
     deep,
@@ -261,8 +261,6 @@ function listFiles(dir: string, options: fg.Options = {}) {
     unique: true,
     absolute: true,
   });
-
-  return files;
 }
 
 function uniquePagesOptions(options: PagesJsonPage[], merge = true): PagesJsonPage[] {

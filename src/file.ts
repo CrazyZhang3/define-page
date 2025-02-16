@@ -232,7 +232,10 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
   debug.exec(`\nFILE: ${file}; EXEC by TSX: ${tsx}`);
   debug.exec(`SCRIPT: \n${script}`);
 
-  const output = await runProcess(tsx, ['-e', script], { cwd });
+  const tempTs = path.join(cwd, '__definePage.ts');
+  fs.writeFileSync(tempTs, script);
+
+  const output = await runProcess(tsx, [tempTs], { cwd, shell: true });
 
   try {
 
