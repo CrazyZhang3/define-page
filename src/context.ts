@@ -250,10 +250,11 @@ export const ctx = new Context();
 
 function listFiles(dir: string, options: fg.Options = {}) {
   const { cwd, ignore = [], deep = 3, ...others } = options;
-  const source = FILE_EXTENSIONS.map(ext => path.join(dir, '**', `*.${ext}`));
+  // fast-glob also use '/' for windows
+  const source = FILE_EXTENSIONS.map(ext => fg.convertPathToPattern(`${dir}/**/*.${ext}`));
   const files = fg.sync(source, {
-    cwd,
-    ignore,
+    cwd: cwd ? fg.convertPathToPattern(cwd) : undefined,
+    ignore: ignore.map(fg.convertPathToPattern),
     deep,
     ...others,
     onlyFiles: true,
