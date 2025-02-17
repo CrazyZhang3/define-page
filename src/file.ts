@@ -2,15 +2,15 @@ import type { SFCScriptBlock } from '@vue/compiler-sfc';
 import type { ParseResult } from 'ast-kit';
 import type { Page } from './page';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import process from 'node:process';
 import vm from 'node:vm';
-import generate from '@babel/generator';
 import * as t from '@babel/types';
 import { parse as parseSFC } from '@vue/compiler-sfc';
 import { babelParse, isCallOf } from 'ast-kit';
 import * as ts from 'typescript';
 import { getConfig } from './config';
+import { generate } from './utils/babel';
 import { debug } from './utils/debug';
 
 interface ScriptSetup extends SFCScriptBlock {
@@ -186,11 +186,7 @@ function parseScriptSetup(file: File) {
 
 async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportDeclaration[]): Promise<R | undefined> {
 
-  const ast = t.file(t.program([
-    t.expressionStatement(exp),
-  ]));
-
-  const code = generate(ast).code;
+  const code = generate(exp).code;
 
   let script = '';
 
@@ -224,13 +220,15 @@ async function executeTypeScriptCode(code: string, filename: string): Promise<an
     },
   }).outputText;
 
+  const dir = path.dirname(filename);
+
   // 创建一个新的虚拟机上下文
   const vmContext = {
-    require,
+    require: createRequire(dir),
     module: {},
     exports: {},
     __filename: filename,
-    __dirname: path.dirname(filename),
+    __dirname: dir,
   };
 
   // 使用 vm 模块执行 JavaScript 代码
