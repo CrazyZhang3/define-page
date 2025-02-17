@@ -9,15 +9,13 @@
       "request": "launch",
       "runtimeArgs": [
         "run-script",
-        "dev:h5"
+        "debug"
       ],
       "runtimeExecutable": "npm",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "type": "node",
-      "cwd": "${workspaceFolder}/playground",
-      "preLaunchTask": "npm: watch",
       "console": "integratedTerminal"
     }
   ]
