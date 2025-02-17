@@ -1,4 +1,7 @@
+import process from 'node:process';
 import { defineBuildConfig } from 'unbuild';
+
+const isDev = process.env.NODE_ENV === 'development';
 
 export default defineBuildConfig({
   entries: ['src/index'],
@@ -8,9 +11,10 @@ export default defineBuildConfig({
     emitCJS: true,
     inlineDependencies: true,
     esbuild: {
-      minify: true,
+      minify: !isDev,
     },
   },
   externals: ['vite'],
   failOnWarn: false,
+  sourcemap: isDev,
 });

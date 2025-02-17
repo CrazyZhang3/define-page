@@ -1,3 +1,4 @@
-export function randamText() {
-  return Math.random().toString(36).slice(-8);
+export interface HelloWorld {
+  hello: string;
+  world: string;
 }

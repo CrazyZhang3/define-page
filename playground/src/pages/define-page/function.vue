@@ -1,12 +1,15 @@
 <script lang="ts" setup>
-definePage(() => {
-  const hello = 'hello';
+import type { HelloWorld } from './utils';
 
-  const world = 'world';
+definePage(() => {
+  const words: HelloWorld = {
+    hello: 'hello',
+    world: 'world',
+  };
 
   return {
     style: {
-      navigationBarTitleText: [hello, world].join(' '),
+      navigationBarTitleText: [words.hello, words.world].join(' '),
     },
     middlewares: [
       'auth',

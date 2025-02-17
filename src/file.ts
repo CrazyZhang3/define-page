@@ -4,13 +4,13 @@ import type { Page } from './page';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import vm from 'node:vm';
 import generate from '@babel/generator';
-import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import { parse as parseSFC } from '@vue/compiler-sfc';
 import { babelParse, isCallOf } from 'ast-kit';
+import * as ts from 'typescript';
 import { getConfig } from './config';
-import { runProcess } from './utils/child-process';
 import { debug } from './utils/debug';
 
 interface ScriptSetup extends SFCScriptBlock {
@@ -185,37 +185,12 @@ function parseScriptSetup(file: File) {
 }
 
 async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportDeclaration[]): Promise<R | undefined> {
-  let tsx = path.join(__dirname, '..', 'node_modules', '.bin', 'tsx');
-
-  if (!fs.existsSync(tsx)) {
-    tsx = path.join(process.cwd(), 'node_modules', '.bin', 'tsx');
-  }
-
-  if (!fs.existsSync(tsx)) {
-    const config = getConfig();
-    tsx = path.join(config.root, 'node_modules', '.bin', 'tsx');
-  }
-
-  if (!fs.existsSync(tsx)) {
-    throw new Error(`[@uni-ku/define-page] "tsx" is required for parse macro expression value`);
-  }
 
   const ast = t.file(t.program([
     t.expressionStatement(exp),
   ]));
 
-  // 删除代码里的 console
-  traverse(ast, {
-    CallExpression: (path, _parent) => {
-      if (path.node.callee.type === 'MemberExpression' && (path.node.callee.object as any).name === 'console') {
-        path.remove();
-      }
-    },
-  });
-
   const code = generate(ast).code;
-
-  const cwd = path.dirname(file);
 
   let script = '';
 
@@ -223,26 +198,58 @@ async function exec<R = any>(file: string, exp: t.Expression, imports: t.ImportD
 
   script += importScript;
 
-  script += t.isFunctionExpression(exp) || t.isArrowFunctionExpression(exp)
-    ? `let fn=${code}\nlet val=fn();\n`
-    : `let val=${code}\n`;
+  script += `export default ${code}`;
 
-  script += `Promise.resolve(val).then(res=>console.log(JSON.stringify(res)))`;
-
-  debug.exec(`\nFILE: ${file}; EXEC by TSX: ${tsx}`);
+  debug.exec(`\nFILE: ${file};`);
   debug.exec(`SCRIPT: \n${script}`);
 
-  const output = await runProcess(tsx, ['-e', script], { cwd });
+  const result = await executeTypeScriptCode(script, file);
+
+  debug.exec(`RESULT: `, result);
+
+  return result;
+}
+
+/**
+ * 执行 TypeScript 代码字符串并返回其返回值
+ * @param code - TypeScript 代码字符串
+ * @returns 返回值
+ */
+async function executeTypeScriptCode(code: string, filename: string): Promise<any> {
+  // 编译 TypeScript 代码为 JavaScript
+  const jsCode = ts.transpileModule(code, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ESNext,
+    },
+  }).outputText;
+
+  // 创建一个新的虚拟机上下文
+  const vmContext = {
+    require,
+    module: {},
+    exports: {},
+    __filename: filename,
+    __dirname: path.dirname(filename),
+  };
+
+  // 使用 vm 模块执行 JavaScript 代码
+  const script = new vm.Script(jsCode);
 
   try {
-
-    const res = JSON.parse(output) as R;
-    debug.exec(`RESULT: ${output}`);
-    return res;
-
-  } catch (_err) {
-
-    debug.error(output);
-    throw new Error(`[@uni-ku/define-page] parse macro expression value error:\n${output}`);
+    script.runInNewContext(vmContext);
+  } catch (error: any) {
+    throw new Error(`[@uni-ku/define-page] ${filename} ${error.message}`);
   }
+
+  // 获取导出的值
+  const result = (vmContext.exports as any).default || vmContext.exports;
+
+  // 如果是函数，执行函数并返回其返回值
+  if (typeof result === 'function') {
+    return Promise.resolve(result());
+  }
+
+  // 如果不是函数，返回结果
+  return Promise.resolve(result);
 }

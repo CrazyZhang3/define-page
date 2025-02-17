@@ -153,13 +153,17 @@ definePage({
 
 函数
 ```ts
+import type { HelloWorld } from './utils';
+
 definePage(() => {
-  const hello = 'hello';
-  const world = 'world';
+  const words: HelloWorld = {
+    hello: 'hello',
+    world: 'world',
+  };
 
   return {
     style: {
-      navigationBarTitleText: [hello, world].join(' '),
+      navigationBarTitleText: [words.hello, words.world].join(' '),
     },
     middlewares: [
       'auth',
@@ -189,16 +193,16 @@ definePage(() => {
 });
 ```
 
-引入外部函数、变量
+引入外部函数、变量 (***注意：仅支持引入纯 JavaScript 或仅 TypeScript 的类型声明。***)
 ```ts
-import { randamText } from './utils';
+import { parse as yamlParser } from 'yaml';
 
 definePage(() => {
-  return {
-    style: {
-      navigationBarTitleText: randamText(),
-    },
-  };
+  const yml = `
+style:
+  navigationBarTitleText: "yaml test"
+`;
+  return yamlParser(yml);
 });
 ```
 
