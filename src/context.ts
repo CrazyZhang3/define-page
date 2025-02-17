@@ -203,7 +203,7 @@ export class Context {
 
       for (const [_, page] of map) {
         const opt = await page.getPageOptions();
-        opt.path = path.relative(root, opt.path);
+        opt.path = path.posix.relative(root, opt.path);
         options.push(opt);
       }
 
