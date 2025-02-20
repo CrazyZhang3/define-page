@@ -1,5 +1,9 @@
 <script setup lang="ts">
+/// <reference types="@uni-ku/define-page/client" />
+import pagesJson from 'virtual:define-page';
 import { ref } from 'vue';
+
+console.log(pagesJson);
 
 const title = ref('Hello');
 

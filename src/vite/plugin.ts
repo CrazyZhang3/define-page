@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import process from 'node:process';
 import chokidar from 'chokidar';
 import MagicString from 'magic-string';
-import { DEFINE_PAGE } from '../constant';
+import { DEFINE_PAGE, MODULE_ID_VIRTUAL, RESOLVED_MODULE_ID_VIRTUAL } from '../constant';
 import { ctx } from '../context';
 import { checkPagesJsonFile } from '../pagesJson';
 import { debug } from '../utils';
@@ -82,6 +82,16 @@ export function viteUniPagesJson(userConfig: UserConfig = {}): Plugin {
     },
     configureServer(server) {
       setupViteServer(server);
+    },
+    resolveId(id) {
+      if (id === MODULE_ID_VIRTUAL) {
+        return RESOLVED_MODULE_ID_VIRTUAL;
+      }
+    },
+    load(id) {
+      if (id === RESOLVED_MODULE_ID_VIRTUAL) {
+        return ctx.virtualModule();
+      }
     },
   };
 }

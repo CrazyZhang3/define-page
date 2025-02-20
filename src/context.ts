@@ -244,6 +244,10 @@ export class Context {
 
     return file?.page;
   }
+
+  virtualModule() {
+    return `export default ${lastPagesJson};`;
+  }
 }
 
 export const ctx = new Context();

@@ -206,14 +206,13 @@ style:
 });
 ```
 
-### 获取当前上下文的数据
+### 获取页面配置数据
 
 ```ts
-import { ctx } from '@uni-ku/define-page';
+/// <reference types="@uni-ku/define-page/client" />
+import pagesJson from 'virtual:define-page';
 
-console.log(ctx.files);
-console.log(ctx.pages);
-console.log(ctx.subPackages);
+console.log(pagesJson);
 ```
 
 ## 感谢
